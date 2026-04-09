@@ -1768,7 +1768,7 @@ void vOchestrator(void *pvParams)
 
     ////////////////////////////listen to all event that would happens///////////////////////////////////
 
-    if (xTaskNotifyWait(0x00, 0xFFFFFFFF, &ulNotificationValue, 0) == pdPASS)
+    if (xTaskNotifyWait(0x00, 0xFFFFFFFF, &ulNotificationValue, pdMS_TO_TICKS(10)) == pdPASS)
     {
       // eventListener(ulNotificationValue, &evtType);
 
