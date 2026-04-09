@@ -8,7 +8,7 @@
 #include <esp_wifi.h>
 
 
-#define WIFI_CHANNEL 11
+#define WIFI_CHANNEL 8
 #define SLAVE_ID 2
 #define STATUS_LED 2
 
