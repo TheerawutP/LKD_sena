@@ -399,34 +399,70 @@ typedef struct struct_message
 struct_message recvData;
 struct_message sendData;
 
+volatile bool isSendComplete = false;
+volatile esp_now_send_status_t lastSendStatus;
+
+// Heartbeat and Pairing
+#define HEARTBEAT_INTERVAL 2000
+#define HEARTBEAT_TIMEOUT 10000
+unsigned long lastCabinSeen = 0;
+unsigned long lastVsgSeen = 0;
+unsigned long lastVtgSeen = 0;
+
 void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len)
 {
   struct_message tempMsg;
 
-  Serial.print(">> ESP-NOW RECV from MAC: ");
-  for (int i = 0; i < 6; i++)
-  {
-    Serial.printf("%02X", mac[i]);
-    if (i < 5)
-      Serial.print(":");
-  }
-  Serial.printf(" | Len: %d bytes\n", len);
-
   if (len != sizeof(tempMsg))
   {
     Serial.println("!! ERROR: Struct Size Mismatch !!");
+    return;
   }
 
   memcpy(&tempMsg, incomingData, sizeof(tempMsg));
 
-  Serial.printf(">> Parsed ID: %d, ResponseFrame: %d\n", tempMsg.fromID, tempMsg.responseFrame);
+  // --- Automatic Pairing Logic ---
+  bool macUpdated = false;
+  if (tempMsg.fromID == 2) // CABIN
+  {
+    lastCabinSeen = millis();
+    if (memcmp(mac, CABIN_MAC, 6) != 0)
+    {
+      Serial.println(">> Auto-Pairing: Updating CABIN_MAC");
+      memcpy(CABIN_MAC, mac, 6);
+      macUpdated = true;
+    }
+  }
+  else if (tempMsg.fromID == 4) // VSG
+  {
+    lastVsgSeen = millis();
+    if (memcmp(mac, VSG_MAC, 6) != 0)
+    {
+      Serial.println(">> Auto-Pairing: Updating VSG_MAC");
+      memcpy(VSG_MAC, mac, 6);
+      macUpdated = true;
+    }
+  }
+  else if (tempMsg.fromID == 5) // VTG
+  {
+    lastVtgSeen = millis();
+    if (memcmp(mac, VTG_MAC, 6) != 0)
+    {
+      Serial.println(">> Auto-Pairing: Updating VTG_MAC");
+      memcpy(VTG_MAC, mac, 6);
+      macUpdated = true;
+    }
+  }
+
+  if (macUpdated)
+  {
+    saveStationMacsToPreferences();
+    applyEspNowPeersForStations();
+    sendWebsocketAlert("INFO", "Station auto-paired and saved.");
+  }
 
   xQueueSend(masterEspNowRxQueue, &tempMsg, 0);
-  // memcpy(&recvData, incomingData, sizeof(recvData));
 }
-
-volatile bool isSendComplete = false;
-volatile esp_now_send_status_t lastSendStatus;
 
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
@@ -2395,10 +2431,11 @@ void vESP_NOW(void *pvParams)
     //     // Serial.println("boardcast success!");
     //   }
     // }
+    
 if (cabinState.shouldWrite == true)
     {
       uint8_t retryCount = 0;
-      const uint8_t MAX_RETRIES = 3; // จำนวนครั้งที่จะพยายามส่งซ้ำ
+      const uint8_t MAX_RETRIES = 3; 
       bool sendSuccess = false;
 
       while (retryCount < MAX_RETRIES && !sendSuccess)
@@ -2408,12 +2445,12 @@ if (cabinState.shouldWrite == true)
         sendData.responseFrame = 0;
         sendData.shouldResponse = false;
 
-        isSendComplete = false; // รีเซ็ตสถานะก่อนส่งเสมอ
+        isSendComplete = false; //reset flag before sending
         result = esp_now_send(CABIN_MAC, (uint8_t *)&sendData, sizeof(sendData));
 
         if (result == ESP_OK)
         {
-          // รอรับสถานะจาก Callback โดยมี Timeout 100ms ป้องกันการค้าง
+          // timeout 100ms
           uint32_t waitTime = 0;
           while (!isSendComplete && waitTime < 100)
           {
@@ -2421,7 +2458,7 @@ if (cabinState.shouldWrite == true)
             waitTime += 5;
           }
 
-          // ตรวจสอบว่าสำเร็จจริงๆ (รับ ACK จากปลายทางแล้ว) หรือไม่
+          // check send status
           if (isSendComplete && lastSendStatus == ESP_NOW_SEND_SUCCESS)
           {
             Serial.println(">> ESP-NOW: Delivery Success to CABIN");
@@ -2440,65 +2477,55 @@ if (cabinState.shouldWrite == true)
         if (!sendSuccess)
         {
           retryCount++;
-          vTaskDelay(pdMS_TO_TICKS(20)); // หน่วงเวลาเล็กน้อยก่อน Retry รอบถัดไป
+          vTaskDelay(pdMS_TO_TICKS(20)); // delay before retrying
         }
       }
 
-      // จัดการสถานะหลังการส่ง
       if (sendSuccess)
       {
-        cabinState.shouldWrite = false; // ส่งสำเร็จ เคลียร์แฟล็ก
+        cabinState.shouldWrite = false; // send success, clear the flag
       }
       else
       {
         Serial.println(">> ESP-NOW: Max retries reached. Cancel sending this frame.");
-        cabinState.shouldWrite = false; // ป้องกันการวนลูปไม่รู้จบ (หากต้องการให้รอส่งเรื่อยๆ จนกว่าจะได้ สามารถคอมเมนต์บรรทัดนี้ทิ้งได้ครับ)
+        cabinState.shouldWrite = false; // prevent infinite retry loop, clear the flag anyway
       }
     }
     /////////////////////////////////////polling block////////////////////////////////////
 
-    //----------------------------------paring esp_now block------------------------------//
+    static unsigned long lastHeartbeatSend = 0;
+    if (millis() - lastHeartbeatSend > HEARTBEAT_INTERVAL)
+    {
+      lastHeartbeatSend = millis();
 
-    // switch (currStation)
-    // {
-    // case CABIN_STA:
-    //   sendData.fromID = MASTER_ID;
-    //   // sendData.commandFrame = 0;
-    //   sendData.responseFrame = 0;
-    //   sendData.shouldResponse = true;
+      // Send broadcast heartbeat so SUB stations (like CABIN) can find the MASTER if they lose channel sync
+      sendData.fromID = MASTER_ID;
+      sendData.commandFrame = 0;
+      sendData.responseFrame = 0;
+      sendData.shouldResponse = false;
+      esp_now_send(broadcastAddress, (uint8_t *)&sendData, sizeof(sendData));
 
-    //   if (isConnected_CABIN == false)
-    //   {
-    //     result = esp_now_send(CABIN_MAC, (uint8_t *)&sendData, sizeof(sendData));
-    //   }
-    //   // if (result == ESP_OK)
-    //   // {
-    //   //   // Serial.println("boardcast success!");
-    //   //   recvData.pollFromStation = 0;
-    //   // }
-    //   // currStation = VSG_STA;
-    //   break;
-
-    //   // case VSG_STA:
-    //   //   sendData.fromID = MASTER_ID;
-    //   //   // sendData.commandFrame = 0;
-    //   //   sendData.responseFrame = 0;
-    //   //   sendData.shouldResponse = true;
-
-    //   //   if (isConnected_VSG == false)
-    //   //   {
-    //   //     result = esp_now_send(VSG_MAC, (uint8_t *)&sendData, sizeof(sendData));
-    //   //   }
-    //   //   // if (result == ESP_OK)
-    //   //   // {
-    //   //   //   // Serial.println("boardcast success!");
-    //   //   // }
-    //   //   currStation = CABIN_STA;
-    //   //   break;
-
-    // default:
-    //   break;
-    // }
+      // Monitor Connectivity
+      unsigned long now = millis();
+      if (lastCabinSeen > 0 && now - lastCabinSeen > HEARTBEAT_TIMEOUT)
+      {
+        Serial.println("!! WARNING: CABIN Heartbeat Lost !!");
+        sendWebsocketAlert("ERROR", "CABIN station disconnected.");
+        lastCabinSeen = 0; // Alert once
+      }
+      if (lastVsgSeen > 0 && now - lastVsgSeen > HEARTBEAT_TIMEOUT)
+      {
+        Serial.println("!! WARNING: VSG Heartbeat Lost !!");
+        sendWebsocketAlert("ERROR", "VSG station disconnected.");
+        lastVsgSeen = 0;
+      }
+      if (lastVtgSeen > 0 && now - lastVtgSeen > HEARTBEAT_TIMEOUT)
+      {
+        Serial.println("!! WARNING: VTG Heartbeat Lost !!");
+        sendWebsocketAlert("ERROR", "VTG station disconnected.");
+        lastVtgSeen = 0;
+      }
+    }
 
     /////////////////////////////////////action on bits block////////////////////////////////////
     // process each queued packet individually so no rising edge is lost between drain cycles
