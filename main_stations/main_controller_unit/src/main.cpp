@@ -4,7 +4,7 @@
 #include <ESPmDNS.h>
 #include <SPIFFS.h>
 #include <AsyncJson.h>
-#include "wifi_credentials.h"
+#include "wifi_credentials.h" 
 #include "WebSocketsServer.h"
 #include "DNSServer.h"
 #include <PubSubClient.h>
@@ -424,6 +424,16 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len)
   xQueueSend(masterEspNowRxQueue, &tempMsg, 0);
   // memcpy(&recvData, incomingData, sizeof(recvData));
 }
+
+volatile bool isSendComplete = false;
+volatile esp_now_send_status_t lastSendStatus;
+
+void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
+{
+  lastSendStatus = status;
+  isSendComplete = true;
+}
+
 
 // while sleep param
 
@@ -2369,23 +2379,82 @@ void vESP_NOW(void *pvParams)
 
     /////////////////////////////////////write block////////////////////////////////////
 
-    if (cabinState.shouldWrite == true)
+    // if (cabinState.shouldWrite == true)
+    // {
+
+    //   sendData.fromID = MASTER_ID;
+    //   sendData.commandFrame = cabinState.writtenFrame[1];
+    //   sendData.responseFrame = 0;
+    //   sendData.shouldResponse = false;
+
+    //   result = esp_now_send(CABIN_MAC, (uint8_t *)&sendData, sizeof(sendData));
+    //   if (result == ESP_OK)
+    //   {
+    //     Serial.println("success sent to CABIN");
+    //     cabinState.shouldWrite = false;
+    //     // Serial.println("boardcast success!");
+    //   }
+    // }
+if (cabinState.shouldWrite == true)
     {
+      uint8_t retryCount = 0;
+      const uint8_t MAX_RETRIES = 3; // จำนวนครั้งที่จะพยายามส่งซ้ำ
+      bool sendSuccess = false;
 
-      sendData.fromID = MASTER_ID;
-      sendData.commandFrame = cabinState.writtenFrame[1];
-      sendData.responseFrame = 0;
-      sendData.shouldResponse = false;
-
-      result = esp_now_send(CABIN_MAC, (uint8_t *)&sendData, sizeof(sendData));
-      if (result == ESP_OK)
+      while (retryCount < MAX_RETRIES && !sendSuccess)
       {
-        Serial.println("success sent to CABIN");
-        cabinState.shouldWrite = false;
-        // Serial.println("boardcast success!");
+        sendData.fromID = MASTER_ID;
+        sendData.commandFrame = cabinState.writtenFrame[1];
+        sendData.responseFrame = 0;
+        sendData.shouldResponse = false;
+
+        isSendComplete = false; // รีเซ็ตสถานะก่อนส่งเสมอ
+        result = esp_now_send(CABIN_MAC, (uint8_t *)&sendData, sizeof(sendData));
+
+        if (result == ESP_OK)
+        {
+          // รอรับสถานะจาก Callback โดยมี Timeout 100ms ป้องกันการค้าง
+          uint32_t waitTime = 0;
+          while (!isSendComplete && waitTime < 100)
+          {
+            vTaskDelay(pdMS_TO_TICKS(5));
+            waitTime += 5;
+          }
+
+          // ตรวจสอบว่าสำเร็จจริงๆ (รับ ACK จากปลายทางแล้ว) หรือไม่
+          if (isSendComplete && lastSendStatus == ESP_NOW_SEND_SUCCESS)
+          {
+            Serial.println(">> ESP-NOW: Delivery Success to CABIN");
+            sendSuccess = true;
+          }
+          else
+          {
+            Serial.printf(">> ESP-NOW: Delivery Fail, Retrying (%d/%d)...\n", retryCount + 1, MAX_RETRIES);
+          }
+        }
+        else
+        {
+          Serial.printf(">> ESP-NOW: Send Queue Error (0x%X), Retrying...\n", result);
+        }
+
+        if (!sendSuccess)
+        {
+          retryCount++;
+          vTaskDelay(pdMS_TO_TICKS(20)); // หน่วงเวลาเล็กน้อยก่อน Retry รอบถัดไป
+        }
+      }
+
+      // จัดการสถานะหลังการส่ง
+      if (sendSuccess)
+      {
+        cabinState.shouldWrite = false; // ส่งสำเร็จ เคลียร์แฟล็ก
+      }
+      else
+      {
+        Serial.println(">> ESP-NOW: Max retries reached. Cancel sending this frame.");
+        cabinState.shouldWrite = false; // ป้องกันการวนลูปไม่รู้จบ (หากต้องการให้รอส่งเรื่อยๆ จนกว่าจะได้ สามารถคอมเมนต์บรรทัดนี้ทิ้งได้ครับ)
       }
     }
-
     /////////////////////////////////////polling block////////////////////////////////////
 
     //----------------------------------paring esp_now block------------------------------//
@@ -3173,6 +3242,7 @@ void setup()
     Serial.println("ESP-NOW init failed");
   }
   esp_now_register_recv_cb(OnDataRecv);
+  esp_now_register_send_cb(OnDataSent);
 
   loadStationMacsFromPreferences();
   Serial.printf("ESP-NOW Station MACs:\n");
