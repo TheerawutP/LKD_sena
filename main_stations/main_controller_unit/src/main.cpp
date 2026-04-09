@@ -2529,7 +2529,7 @@ if (cabinState.shouldWrite == true)
 
     /////////////////////////////////////action on bits block////////////////////////////////////
     // process each queued packet individually so no rising edge is lost between drain cycles
-    while (xQueueReceive(masterEspNowRxQueue, &msg, 0) == pdPASS)
+    while (xQueueReceive(masterEspNowRxQueue, &msg, pdMS_TO_TICKS(5)) == pdPASS)
     {
       if (msg.fromID == 2)
       {
@@ -2721,7 +2721,7 @@ if (cabinState.shouldWrite == true)
       }
     }
 
-    // vTaskDelay(pdMS_TO_TICKS(modbusDelayTime));
+    // vTaskDelay(pdMS_TO_TICKS(5));
   }
 }
 
