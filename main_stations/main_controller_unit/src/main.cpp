@@ -403,7 +403,7 @@ volatile bool isSendComplete = false;
 volatile esp_now_send_status_t lastSendStatus;
 
 // Heartbeat and Pairing
-#define HEARTBEAT_INTERVAL 2000
+#define HEARTBEAT_INTERVAL 200
 #define HEARTBEAT_TIMEOUT 10000
 unsigned long lastCabinSeen = 0;
 unsigned long lastVsgSeen = 0;
@@ -2500,7 +2500,7 @@ if (cabinState.shouldWrite == true)
 
       // Send broadcast heartbeat so SUB stations (like CABIN) can find the MASTER if they lose channel sync
       sendData.fromID = MASTER_ID;
-      sendData.commandFrame = 0;
+      // sendData.commandFrame = 0;
       sendData.responseFrame = 0;
       sendData.shouldResponse = false;
       esp_now_send(broadcastAddress, (uint8_t *)&sendData, sizeof(sendData));
