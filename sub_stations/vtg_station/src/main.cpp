@@ -42,7 +42,34 @@ void hopChannel() {
 }
 
 void OnDataRecv(const esp_now_recv_info_t *esp_now_info, const uint8_t *incomingData, int len) {
-  // struct_message tempMsg;
+  if (len != sizeof(struct_message)) return;
+
+  struct_message tempMsg;
+  memcpy(&tempMsg, incomingData, sizeof(tempMsg));
+
+  // --- Automatic Pairing Logic ---
+  if (tempMsg.fromID == 100) { // MASTER_ID
+    if (memcmp(esp_now_info->src_addr, masterAddress, 6) != 0) {
+      Serial.println(">> New Master detected! Updating MAC...");
+      
+      // Remove old peer
+      esp_now_del_peer(masterAddress);
+      
+      // Update master MAC
+      memcpy(masterAddress, esp_now_info->src_addr, 6);
+      
+      // Add new peer
+      esp_now_peer_info_t peerInfo = {};
+      memcpy(peerInfo.peer_addr, masterAddress, 6);
+      peerInfo.channel = 0;
+      peerInfo.encrypt = false;
+      if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+        Serial.println(">> Failed to add new Master as peer");
+      } else {
+        Serial.println(">> Auto-paired with new Master.");
+      }
+    }
+  }
 
   // memcpy(&tempMsg, incomingData, sizeof(tempMsg));
   // xQueueSend(espNowRxQueue, &tempMsg, 0);
