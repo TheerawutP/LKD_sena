@@ -190,6 +190,7 @@ SemaphoreHandle_t dataMutex;
 
 QueueHandle_t masterEspNowRxQueue;
 QueueHandle_t xQueueCommand;
+QueueHandle_t cabinTxQueue;
 
 TaskHandle_t xOchestratorHandle;
 TaskHandle_t xRFReceiverHandleHandle;
@@ -513,9 +514,15 @@ inline void M_STP()
   // Serial.println("Motor Stop");
 }
 
-void enableTransmit(bool &shouldWrite)
+void sendCabinCommand(uint16_t frame)
 {
-  shouldWrite = true;
+  if (cabinTxQueue != NULL)
+  {
+    if (xQueueSend(cabinTxQueue, &frame, 0) != pdPASS)
+    {
+      Serial.println("!! cabinTxQueue Full !!");
+    }
+  }
 }
 
 void writeBit(uint16_t &value, uint8_t bit, bool state)
@@ -564,7 +571,7 @@ void emoActivate()
   // if (xSemaphoreTake(dataMutex, portMAX_DELAY) == pdTRUE)
   // {
   //   // writeFrameDFPlayer(SF_1016, cabinState.writtenFrame[1], cabinState.isBusy, 6);
-  //   enableTransmit(cabinState.shouldWrite);
+  //   sendCabinCommand(cabinState.writtenFrame[1]);
   //   writeBit(cabinState.writtenFrame[1], 4, true);
   //   writeBit(cabinState.writtenFrame[1], 2, false);
   //   writeBit(cabinState.writtenFrame[1], 1, false);
@@ -580,7 +587,7 @@ void emoDeactivate()
   if (xSemaphoreTake(dataMutex, pdMS_TO_TICKS(100)) == pdTRUE)
   {
     writeBit(cabinState.writtenFrame[1], 4, false);
-        enableTransmit(cabinState.shouldWrite);
+        sendCabinCommand(cabinState.writtenFrame[1]);
 
     xSemaphoreGive(dataMutex);
   }
@@ -1618,7 +1625,7 @@ void getDir(uint8_t target, transitCommand_t *cmd)
         writeBit(cabinState.writtenFrame[1], 3, false);
         writeBit(cabinState.writtenFrame[1], 2, false);
         writeBit(cabinState.writtenFrame[1], 1, true);
-                enableTransmit(cabinState.shouldWrite);
+                sendCabinCommand(cabinState.writtenFrame[1]);
 
       }
       else
@@ -1628,7 +1635,7 @@ void getDir(uint8_t target, transitCommand_t *cmd)
         writeBit(cabinState.writtenFrame[1], 3, false);
         writeBit(cabinState.writtenFrame[1], 2, true);
         writeBit(cabinState.writtenFrame[1], 1, false);
-                enableTransmit(cabinState.shouldWrite);
+                sendCabinCommand(cabinState.writtenFrame[1]);
 
       }
       xSemaphoreGive(dataMutex);
@@ -1664,7 +1671,7 @@ void getDir(uint8_t target, transitCommand_t *cmd)
           writeBit(cabinState.writtenFrame[1], 3, false);
           writeBit(cabinState.writtenFrame[1], 2, false);
           writeBit(cabinState.writtenFrame[1], 1, true);
-          enableTransmit(cabinState.shouldWrite);
+          sendCabinCommand(cabinState.writtenFrame[1]);
 
         }
         else
@@ -1674,7 +1681,7 @@ void getDir(uint8_t target, transitCommand_t *cmd)
           writeBit(cabinState.writtenFrame[1], 3, false);
           writeBit(cabinState.writtenFrame[1], 2, true);
           writeBit(cabinState.writtenFrame[1], 1, false);
-          enableTransmit(cabinState.shouldWrite);
+          sendCabinCommand(cabinState.writtenFrame[1]);
 
         }
         xSemaphoreGive(dataMutex);
@@ -1719,7 +1726,7 @@ void checkUpdatePos(uint8_t reachedFloorNum)
         writeBit(cabinState.writtenFrame[1], 2, false);
         writeBit(cabinState.writtenFrame[1], 1, false);
         writeBit(cabinState.writtenFrame[1], 0, false);
-                  enableTransmit(cabinState.shouldWrite);
+                  sendCabinCommand(cabinState.writtenFrame[1]);
 
         xSemaphoreGive(dataMutex);
       }
@@ -1822,7 +1829,7 @@ void vOchestrator(void *pvParams)
           writeBit(cabinState.writtenFrame[1], 2, false);
           writeBit(cabinState.writtenFrame[1], 1, false);
           writeBit(cabinState.writtenFrame[1], 0, true);
-          enableTransmit(cabinState.shouldWrite);
+          sendCabinCommand(cabinState.writtenFrame[1]);
           xSemaphoreGive(dataMutex);
         }
 
@@ -1842,7 +1849,7 @@ void vOchestrator(void *pvParams)
             writeBit(cabinState.writtenFrame[1], 3, true);
             writeBit(cabinState.writtenFrame[1], 2, false);
             writeBit(cabinState.writtenFrame[1], 1, false);
-                      enableTransmit(cabinState.shouldWrite);
+                      sendCabinCommand(cabinState.writtenFrame[1]);
 
           }
           xSemaphoreGive(dataMutex);
@@ -1864,7 +1871,7 @@ void vOchestrator(void *pvParams)
           // if (elevator.state == STATE_PAUSED)
           // {
           //   writeFrameDFPlayer(SF_0000, cabinState.writtenFrame[1], cabinState.isBusy, 6);
-          //   enableTransmit(cabinState.shouldWrite);
+          //   sendCabinCommand(cabinState.writtenFrame[1]);
           // }
           xSemaphoreGive(dataMutex);
         }
@@ -1889,7 +1896,7 @@ void vOchestrator(void *pvParams)
           writeBit(cabinState.writtenFrame[1], 3, true);
           writeBit(cabinState.writtenFrame[1], 2, false);
           writeBit(cabinState.writtenFrame[1], 1, false);
-                    enableTransmit(cabinState.shouldWrite);
+                    sendCabinCommand(cabinState.writtenFrame[1]);
 
           xSemaphoreGive(dataMutex);
         }
@@ -1919,7 +1926,7 @@ void vOchestrator(void *pvParams)
           if (elevator.dir == DIR_DOWN && elevator.state == STATE_RUNNING)
           {
             writeFrameDFPlayer(SF_1004, cabinState.writtenFrame[1], cabinState.isBusy, 6);
-            enableTransmit(cabinState.shouldWrite);
+            sendCabinCommand(cabinState.writtenFrame[1]);
           }
           xSemaphoreGive(dataMutex);
         }
@@ -1961,7 +1968,7 @@ void vOchestrator(void *pvParams)
           writeBit(cabinState.writtenFrame[1], 3, false);
           writeBit(cabinState.writtenFrame[1], 2, false);
           writeBit(cabinState.writtenFrame[1], 1, false);
-                    enableTransmit(cabinState.shouldWrite);
+                    sendCabinCommand(cabinState.writtenFrame[1]);
 
           xSemaphoreGive(dataMutex);
         }
@@ -1981,7 +1988,7 @@ void vOchestrator(void *pvParams)
           writeFrameDFPlayer(SF_1006, cabinState.writtenFrame[1], cabinState.isBusy, 6);
           writeBit(cabinState.writtenFrame[1], 2, true);
           writeBit(cabinState.writtenFrame[1], 1, false);
-                    enableTransmit(cabinState.shouldWrite);
+                    sendCabinCommand(cabinState.writtenFrame[1]);
 
           xSemaphoreGive(dataMutex);
         }
@@ -2003,7 +2010,7 @@ void vOchestrator(void *pvParams)
           writeFrameDFPlayer(SF_1014, cabinState.writtenFrame[1], cabinState.isBusy, 6);
           writeBit(cabinState.writtenFrame[1], 2, false);
           writeBit(cabinState.writtenFrame[1], 1, false);
-                    enableTransmit(cabinState.shouldWrite);
+                    sendCabinCommand(cabinState.writtenFrame[1]);
 
           xSemaphoreGive(dataMutex);
         }
@@ -2020,7 +2027,7 @@ void vOchestrator(void *pvParams)
           writeFrameDFPlayer(SF_1015, cabinState.writtenFrame[1], cabinState.isBusy, 6);
           writeBit(cabinState.writtenFrame[1], 2, false);
           writeBit(cabinState.writtenFrame[1], 1, false);
-                    enableTransmit(cabinState.shouldWrite);
+                    sendCabinCommand(cabinState.writtenFrame[1]);
 
           xSemaphoreGive(dataMutex);
         }
@@ -2057,7 +2064,7 @@ void vOchestrator(void *pvParams)
           writeBit(cabinState.writtenFrame[1], 2, false);
           writeBit(cabinState.writtenFrame[1], 1, true);
           writeBit(cabinState.writtenFrame[1], 0, true);
-                    enableTransmit(cabinState.shouldWrite);
+                    sendCabinCommand(cabinState.writtenFrame[1]);
 
           xSemaphoreGive(dataMutex);
         }
@@ -2146,7 +2153,7 @@ void vOchestrator(void *pvParams)
             writeBit(cabinState.writtenFrame[1], 3, true);
             writeBit(cabinState.writtenFrame[1], 2, false);
             writeBit(cabinState.writtenFrame[1], 1, false);
-          enableTransmit(cabinState.shouldWrite);
+          sendCabinCommand(cabinState.writtenFrame[1]);
 
             xSemaphoreGive(dataMutex);
           }
@@ -2169,7 +2176,7 @@ void vOchestrator(void *pvParams)
             writeBit(cabinState.writtenFrame[1], 3, true);
             writeBit(cabinState.writtenFrame[1], 2, false);
             writeBit(cabinState.writtenFrame[1], 1, false);
-          enableTransmit(cabinState.shouldWrite);
+          sendCabinCommand(cabinState.writtenFrame[1]);
 
             xSemaphoreGive(dataMutex);
           }
@@ -2414,25 +2421,8 @@ void vESP_NOW(void *pvParams)
   {
 
     /////////////////////////////////////write block////////////////////////////////////
-
-    // if (cabinState.shouldWrite == true)
-    // {
-
-    //   sendData.fromID = MASTER_ID;
-    //   sendData.commandFrame = cabinState.writtenFrame[1];
-    //   sendData.responseFrame = 0;
-    //   sendData.shouldResponse = false;
-
-    //   result = esp_now_send(CABIN_MAC, (uint8_t *)&sendData, sizeof(sendData));
-    //   if (result == ESP_OK)
-    //   {
-    //     Serial.println("success sent to CABIN");
-    //     cabinState.shouldWrite = false;
-    //     // Serial.println("boardcast success!");
-    //   }
-    // }
-    
-if (cabinState.shouldWrite == true)
+    uint16_t cabinFrame;
+    if (xQueueReceive(cabinTxQueue, &cabinFrame, 0) == pdPASS)
     {
       uint8_t retryCount = 0;
       const uint8_t MAX_RETRIES = 3; 
@@ -2441,7 +2431,7 @@ if (cabinState.shouldWrite == true)
       while (retryCount < MAX_RETRIES && !sendSuccess)
       {
         sendData.fromID = MASTER_ID;
-        sendData.commandFrame = cabinState.writtenFrame[1];
+        sendData.commandFrame = cabinFrame;
         sendData.responseFrame = 0;
         sendData.shouldResponse = false;
 
@@ -2479,16 +2469,6 @@ if (cabinState.shouldWrite == true)
           retryCount++;
           vTaskDelay(pdMS_TO_TICKS(20)); // delay before retrying
         }
-      }
-
-      if (sendSuccess)
-      {
-        cabinState.shouldWrite = false; // send success, clear the flag
-      }
-      else
-      {
-        Serial.println(">> ESP-NOW: Max retries reached. Cancel sending this frame.");
-        cabinState.shouldWrite = false; // prevent infinite retry loop, clear the flag anyway
       }
     }
     /////////////////////////////////////polling block////////////////////////////////////
@@ -2551,7 +2531,7 @@ if (cabinState.shouldWrite == true)
           if (xSemaphoreTake(dataMutex, pdMS_TO_TICKS(50)) == pdTRUE)
           {
             writeBit(cabinState.writtenFrame[1], 5, true);
-            cabinState.shouldWrite = true;
+            sendCabinCommand(cabinState.writtenFrame[1]);
             xSemaphoreGive(dataMutex);
           }
 
@@ -2630,7 +2610,7 @@ if (cabinState.shouldWrite == true)
           if (xSemaphoreTake(dataMutex, pdMS_TO_TICKS(50)) == pdTRUE)
           {
             writeBit(cabinState.writtenFrame[1], 5, true);
-            cabinState.shouldWrite = true;
+            sendCabinCommand(cabinState.writtenFrame[1]);
             xSemaphoreGive(dataMutex);
           }
           if (xIdleLightTimer != NULL)
@@ -3205,7 +3185,7 @@ void vIdleLightCallback(TimerHandle_t xTimer)
     writeBit(cabinState.writtenFrame[1], 3, false);
     writeBit(cabinState.writtenFrame[1], 2, false);
     writeBit(cabinState.writtenFrame[1], 1, false);
-    enableTransmit(cabinState.shouldWrite);
+    sendCabinCommand(cabinState.writtenFrame[1]);
     xSemaphoreGive(dataMutex);
   }
 }
@@ -3339,6 +3319,7 @@ void setup()
   // hasChangedMutex = xSemaphoreCreateMutex();
 
   xQueueCommand = xQueueCreate(10, sizeof(userCommand_t));
+  cabinTxQueue = xQueueCreate(20, sizeof(uint16_t));
   // xQueueGetDirection = xQueueCreate(1, sizeof(uint8_t));
 
   xStartRunningTimer = xTimerCreate("startRunning", WAIT_TO_RUNNING_MS, pdFALSE, NULL, vStartRunning);
