@@ -1,4 +1,4 @@
-// #include "elevatorTypes.h"
+//elevatorTypes.h
 #pragma once
 #include "config.h"
 #include <Arduino.h>
@@ -212,16 +212,4 @@ typedef struct struct_message
   bool shouldResponse;
 } struct_message;
 
-struct_message recvData;
-struct_message sendData;
-
-volatile bool isSendComplete = false;
-volatile esp_now_send_status_t lastSendStatus;
-
-// Heartbeat and Pairing
-#define HEARTBEAT_INTERVAL 200
-#define HEARTBEAT_TIMEOUT 10000
-unsigned long lastCabinSeen = 0;
-unsigned long lastVsgSeen = 0;
-unsigned long lastVtgSeen = 0;
 

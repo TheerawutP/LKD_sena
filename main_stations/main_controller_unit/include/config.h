@@ -1,3 +1,4 @@
+//config.h
 #pragma once
 #include "arduino.h"
 
@@ -81,29 +82,21 @@
 
 #define WAIT_TO_RUNNING_MS 700
 
-uint8_t torque_rated_up = 80;
-uint8_t torque_rated_down = 40; // both in percentage
+#define torque_rated_up 80
+#define torque_rated_down 40 // both in percentage
 
-volatile uint32_t modbusDelayTime = 50;
-volatile uint32_t modbusRetryTime = 20;
-
-volatile uint8_t overSpeed_counter = 0;
-volatile uint32_t lastTimeCount = 0;
 
 // const uint32_t minSpeedPeriod = 1000;
-const uint32_t upper_bound_speed_interval = 800;
-const uint32_t lower_bound_speed_interval = 1000;
-const uint32_t overSpeed_threshold = 2;
+#define upper_bound_speed_interval 800
+#define lower_bound_speed_interval 1000
+#define overSpeed_threshold 2
 
-const uint8_t MIN_FLOOR = 1;
-uint8_t MAX_FLOOR = 2;
+#define MIN_FLOOR 1
+#define MAX_FLOOR 2
 
-volatile uint16_t writeFrame[5][16]; // slave id, write reg
 
-const char *mqtt_broker = "kit.flinkone.com";
-const int mqtt_port = 1883; // unencrypt
-const char *KIT_topic = "kit";
-const char *UT_case = "/UT_55555";
-const char *system_status = "/sys_v2";
-const char *elevator_status = "/ele_status";
-const char *inverter_status = "/inv_status";
+// Heartbeat and Pairing
+#define HEARTBEAT_INTERVAL 200
+#define HEARTBEAT_TIMEOUT 10000
+
+
