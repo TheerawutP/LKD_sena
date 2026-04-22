@@ -129,6 +129,7 @@ typedef struct{
   uint32_t running_hz;
   uint32_t torque;
   uint16_t digitalInput;
+  uint16_t raw_regs[10];
 } inverter_t; 
 
 typedef struct{
