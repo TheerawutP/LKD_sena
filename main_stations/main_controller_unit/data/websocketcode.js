@@ -1,17 +1,18 @@
 // Javascript code to set up a websocket.
-
 var m_url_JS = "ws://" + window.location.hostname + ":81/";
 // var m_url_JS = "ws://nanostat.local:81/";
 //var m_url_JS = "ws://192.168.1.44:81/";
 // var url = "ws://192.168.4.1:1337/";
 
 var m_websocket;
+var domElements = {};
+
 
 // This is called when the page finishes loading
 function init() {
-    domElements.btnUp = document.getElementById("btnUp");
+domElements.btnUp = document.getElementById("btnUp");
     domElements.btnDown = document.getElementById("btnDown");
-    domElements.btnEmg = document.getElementById("btnEmergency");
+    domElements.btnEmg = document.getElementById("btnEmg");
     domElements.emgText = document.getElementById("emgText"); 
     domElements.floorNumDisplay = document.querySelector("#FloorValue .floor-num");
     domElements.floorMsg = document.querySelector("#FloorValue .floor-msg");
@@ -21,29 +22,21 @@ function init() {
 }
 
 // Call this to connect to the WebSocket server
-// function wsConnect(m_url_JS) {
+function wsConnect(m_url_JS) {
 
-//     // Connect to WebSocket server
-//     m_url_JS = "ws://" + window.location.hostname + ":81/"
-//     // console.log(m_url_JS);
-//     m_websocket = new WebSocket(m_url_JS);
-//     m_websocket.binaryType = "arraybuffer";
-
-//     // Assign callbacks
-//     m_websocket.onopen = function (evt) { onOpen(evt) };
-//     m_websocket.onclose = function (evt) { onClose(evt) };
-//     m_websocket.onmessage = function (evt) { onMessage(evt) };
-//     m_websocket.onerror = function (evt) { onError(evt) };
-
-// }
-
-function wsConnect() {
+    // Connect to WebSocket server
+    m_url_JS = "ws://" + window.location.hostname + ":81/"
+    // console.log(m_url_JS);
     m_websocket = new WebSocket(m_url_JS);
-    m_websocket.onopen = function (evt) { console.log("WS Connected"); };
-    m_websocket.onclose = function (evt) { setTimeout(wsConnect, 2000); };
-    m_websocket.onmessage = function (evt) { onMessage(evt) };
-}
+    m_websocket.binaryType = "arraybuffer";
 
+    // Assign callbacks
+    m_websocket.onopen = function (evt) { onOpen(evt) };
+    m_websocket.onclose = function (evt) { onClose(evt) };
+    m_websocket.onmessage = function (evt) { onMessage(evt) };
+    m_websocket.onerror = function (evt) { onError(evt) };
+
+}
 
 // Called when a WebSocket connection is established with the server
 function onOpen(evt) {
@@ -184,6 +177,8 @@ function onMessage(evt) {
     const STATE_IDLE = 0;
     const STATE_RUNNING = 1;
     const STATE_PENDING = 2;
+    const STATE_PAUSED = 3;
+    const STATE_EMERGENCY = 4;
 
     if (typeof (evt.data) === "string") {
         try {
