@@ -18,6 +18,7 @@
 #include <ModbusMaster.h>
 #include <Preferences.h>
 #include <esp_now.h>
+#include <esp_wifi.h>
 
 const char *mqtt_broker = "kit.flinkone.com";
 const int mqtt_port = 1883; // unencrypt
@@ -217,10 +218,12 @@ static void applyEspNowPeersForStations()
   esp_now_del_peer(VTG_MAC);
 
   esp_now_peer_info_t peer = {};
-
-  memcpy(peer.peer_addr, CABIN_MAC, 6);
   peer.channel = 0;
   peer.encrypt = false;
+
+  peer.ifidx = WIFI_IF_STA;
+
+  memcpy(peer.peer_addr, CABIN_MAC, 6);
   esp_now_add_peer(&peer);
 
   memcpy(peer.peer_addr, VSG_MAC, 6);
@@ -1046,8 +1049,8 @@ void handle_websocket_text(uint8_t *payload)
       // ส่งแจ้งเตือนกลับไปที่หน้าเว็บก่อนดับ
       sendWebsocketAlert("WARNING", "MCU is restarting...");
 
-      delay(500);   
-      ESP.restart(); 
+      delay(500);
+      ESP.restart();
     }
   }
 
@@ -2296,10 +2299,10 @@ void vESP_NOW(void *pvParams)
         {
           // timeout 100ms
           uint32_t waitTime = 0;
-          while (!isSendComplete && waitTime < 100)
+          while (!isSendComplete && waitTime < 20)
           {
-            vTaskDelay(pdMS_TO_TICKS(5));
-            waitTime += 5;
+            vTaskDelay(pdMS_TO_TICKS(2));
+            waitTime += 2;
           }
 
           // check send status
@@ -3098,6 +3101,8 @@ void setup()
   // wifiClient.setInsecure();
   Serial.println(WiFi.localIP());
   setupMQTT();
+
+  esp_wifi_set_ps(WIFI_PS_NONE);
 
   if (esp_now_init() != ESP_OK)
   {
