@@ -179,9 +179,9 @@ typedef struct
 
 const RF_KeyMap rfKeys[] = {
     // --- set 1 ---
-    // {toFloor1, BTN_TO_FLOOR_1},
-    // {toFloor2, BTN_TO_FLOOR_2},
-    // {STOP, BTN_STOP},
+    {toFloor1, BTN_TO_FLOOR_1},
+    {toFloor2, BTN_TO_FLOOR_2},
+    {STOP, BTN_STOP},
     // {EM_remote_1, BTN_EMERGENCY},
 
     // --- set 2 ---
@@ -199,8 +199,13 @@ const RF_KeyMap rfKeys[] = {
     // --- set 4 ---
     {toFloor1_4, BTN_TO_FLOOR_1},
     {toFloor2_4, BTN_TO_FLOOR_2},
-    {STOP_4, BTN_STOP}
+    {STOP_4, BTN_STOP},
     // {EM_remote_4, BTN_EMERGENCY},
+
+    // --- set 5 ---
+    {toFloor1_5, BTN_TO_FLOOR_1},
+    {toFloor2_5, BTN_TO_FLOOR_2},
+    {STOP_5, BTN_STOP}
 };
 
 const int numRfKeys = sizeof(rfKeys) / sizeof(RF_KeyMap);

@@ -23,27 +23,33 @@
 #define toFloor2 174740
 // #define POWER_CUT 174738
 #define STOP 174737
+
+
 #define INVERTER_DI_STOP 992
 #define INVERTER_DI_EMO 5092
 
-// remote set2
+// remote set2 sena
 #define toFloor1_2 12418580
 #define toFloor2_2 12418584
 #define STOP_2 12418578
 #define EM_remote_2 12418577
 
-// remote set3
+// remote set3 sena
 #define toFloor1_3 16003636
 #define toFloor2_3 16003640
 #define STOP_3 16003634
 #define EM_remote_3 16003633
 
-// remote set4
+// remote set4 sena
 #define toFloor1_4 16751236
 #define toFloor2_4 16751240
 #define STOP_4 16751234
 #define EM_remote_4 16751233
 
+//set 5 
+#define toFloor1_5 9395170
+#define toFloor2_5 9395169
+#define STOP_5 16736120
 
 #define SF_0000 0
 #define SF_1001 1  // going up
