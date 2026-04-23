@@ -2277,7 +2277,7 @@ void vESP_NOW(void *pvParams)
 
         isSendComplete = false; // reset flag before sending
         result = esp_now_send(CABIN_MAC, (uint8_t *)&sendData, sizeof(sendData));
-
+        
         if (result == ESP_OK)
         {
           // timeout 100ms
@@ -2634,14 +2634,14 @@ void vPollingNoPower(void *pvParams)
     if (currentIsNoPower && !lastIsNoPower)
     {
       Serial.println(">> Event: Power LOST!");
-      // xTaskNotify(xOchestratorHandle, NO_POWER, eSetValueWithOverwrite); // [DBG] disabled for normal up/down test
+      xTaskNotify(xOchestratorHandle, NO_POWER, eSetValueWithOverwrite); // [DBG] disabled for normal up/down test
       lastIsNoPower = true;
     }
 
     else if (currentIsPowerOK && lastIsNoPower)
     {
       Serial.println(">> Event: Power RESTORED!");
-      // xTaskNotify(xOchestratorHandle, POWER_RESTORED, eSetValueWithOverwrite); // [DBG] disabled for normal up/down test
+      xTaskNotify(xOchestratorHandle, POWER_RESTORED, eSetValueWithOverwrite); // [DBG] disabled for normal up/down test
       lastIsNoPower = false;
     }
 
