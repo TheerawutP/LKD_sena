@@ -1037,6 +1037,20 @@ void handle_websocket_text(uint8_t *payload)
 
   JsonObject m_JsonObject_from_payload = m_JSONdoc_from_payload.as<JsonObject>();
 
+  if (m_JSONdoc_from_payload.containsKey("reset_mcu"))
+  {
+    if (m_JSONdoc_from_payload["reset_mcu"] == true)
+    {
+      Serial.println(">> WebCommand: Reset MCU Request Received.");
+
+      // ส่งแจ้งเตือนกลับไปที่หน้าเว็บก่อนดับ
+      sendWebsocketAlert("WARNING", "MCU is restarting...");
+
+      delay(500);   
+      ESP.restart(); 
+    }
+  }
+
   bool anyMacUpdated = false;
   uint8_t tmpMac[6];
 
@@ -2277,7 +2291,7 @@ void vESP_NOW(void *pvParams)
 
         isSendComplete = false; // reset flag before sending
         result = esp_now_send(CABIN_MAC, (uint8_t *)&sendData, sizeof(sendData));
-        
+
         if (result == ESP_OK)
         {
           // timeout 100ms

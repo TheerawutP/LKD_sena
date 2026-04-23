@@ -96,15 +96,15 @@
 
   </div> -->
 
-  <div class="container">
-    <div class="container">
+      <div class="container">
+        <div class="container">
 
-      <div class="row">
+          <div class="row">
 
-        <div class="col-md p-0">
+            <div class="col-md p-0">
 
-          <!-- General -->
-          <!-- <div class="div mybox7 ps-1 pt-1 ">
+              <!-- General -->
+              <!-- <div class="div mybox7 ps-1 pt-1 ">
           <h6>General</h6>
         </div>
 
@@ -126,115 +126,122 @@
         </div> -->
 
 
-          <div class="div mybox7 ps-1 pt-1 text-white ">
-            <h6>General Parameters</h6>
+              <div class="div mybox7 ps-1 pt-1 text-white ">
+                <h6>General Parameters</h6>
+              </div>
+
+              <div class="div mybox2  ">
+
+                <div class="form-box ms-5 ms-md-0">
+                  <!-- <div class="form-box ms-5 ms-md-0  d-flex justify-content-center text-center"> -->
+                  <label class="form-label mb-0   ">Stop Points</label>
+                  <input type="number" class="  form-control p-0 border border-secondary" name="floor_param"
+                    id="floor_param_id" value=2 min=2 max=3>
+                </div>
+              </div>
+
+
+              <div class="div mybox2">
+                <div class="form-box ms-5 ms-md-0">
+                  <label class="form-label mb-0">Param_2</label>
+                  <input type="number" class="form-control p-0 border border-secondary" name="up_param" id="up_param_id"
+                    value=0 min=0 max=1000>
+                </div>
+              </div>
+
+
+              <div class="div mybox2">
+                <div class="form-box ms-5 ms-md-0">
+                  <label class="form-label mb-0">Param_3</label>
+                  <input type="number" class="form-control p-0 border border-secondary" name="down_param"
+                    id="down_param_id" value=0 min=0 max=1000>
+                </div>
+              </div>
+
+
+              <div class="div mybox2">
+                <div class="form-box ms-5 ms-md-0">
+                  <label class="form-label mb-0">Param_4</label>
+                  <input type="number" class="form-control p-0 border border-secondary" name="alice_param"
+                    id="alice_param_id" value=0 min=0 max=1000>
+                </div>
+              </div>
+
+              <div class="div mybox2">
+                <div class="form-box ms-5 ms-md-0">
+                  <label class="form-label mb-0">Force State (0=IDLE, 3=PAUSE, 4=EMG)</label>
+                  <input type="number" class="form-control p-0 border border-secondary" name="force_state"
+                    id="force_state_id" value="0" min="0" max="10">
+                </div>
+              </div>
+
+              <div class="div mybox7 ps-1 pt-1 text-white ">
+                <h6>Station MAC Addresses</h6>
+              </div>
+
+              <div class="div mybox2">
+                <div class="form-box ms-5 ms-md-0">
+                  <label class="form-label mb-0">CABIN_MAC</label>
+                  <input type="text" class="form-control p-0 border border-secondary" name="cabin_mac" id="cabin_mac_id"
+                    placeholder="F8:B3:B7:4F:18:F4">
+                </div>
+              </div>
+
+              <div class="div mybox2">
+                <div class="form-box ms-5 ms-md-0">
+                  <label class="form-label mb-0">VSG_MAC</label>
+                  <input type="text" class="form-control p-0 border border-secondary" name="vsg_mac" id="vsg_mac_id"
+                    placeholder="EC:E3:34:1A:73:3C">
+                </div>
+              </div>
+
+              <div class="div mybox2">
+                <div class="form-box ms-5 ms-md-0">
+                  <label class="form-label mb-0">VTG_MAC</label>
+                  <input type="text" class="form-control p-0 border border-secondary" name="vtg_mac" id="vtg_mac_id"
+                    placeholder="1C:C3:AB:F9:A4:38">
+                </div>
+              </div>
+
+              <div class="div mybox2">
+                <div class="form-box ms-5 ms-md-0">
+                  <label class="form-label mb-0">WiFi Channel (AP)</label>
+                  <input type="number" class="form-control p-0 border border-secondary" name="wifi_channel"
+                    id="wifi_channel_id" value=6 min=1 max=13>
+                </div>
+              </div>
+
+              <div class="row">
+
+                <!-- <div class="col text-center border border-secondary"> -->
+                <div class="col text-center ">
+                  <button type="reset" class="btn btn-primary my-2">Reset</button>
+                </div>
+                <div class="col text-center ">
+                  <button type="submit" class="btn btn-primary my-2">Submit</button>
+                </div>
+
+                <div class="col text-center ">
+                  <button type="button" class="btn btn-primary my-2" onclick="sendStationMacs()">Update MACs</button>
+                </div>
+
+                <div class="col text-center ">
+                  <button type="button" class="btn btn-primary my-2" onclick="sendWifiChannel()">Update WiFi
+                    Channel</button>
+                </div>
+
+
+                <button class="lift-btn" id="btnReset" onclick="reset_mcu()">
+                  <i data-lucide="refresh-ccw"></i> <span
+                    style="font-size: 10px; color: white; display: block;">RESET MCU</span>
+                </button>
+
+              </div>
+            </div>
+
           </div>
 
-          <div class="div mybox2  ">
-
-            <div class="form-box ms-5 ms-md-0">
-              <!-- <div class="form-box ms-5 ms-md-0  d-flex justify-content-center text-center"> -->
-              <label class="form-label mb-0   ">Stop Points</label>
-              <input type="number" class="  form-control p-0 border border-secondary" name="floor_param"
-                id="floor_param_id" value=2 min=2 max=3>
-            </div>
-          </div>
-
-
-          <div class="div mybox2">
-            <div class="form-box ms-5 ms-md-0">
-              <label class="form-label mb-0">Param_2</label>
-              <input type="number" class="form-control p-0 border border-secondary" name="up_param" id="up_param_id"
-                value=0 min=0 max=1000>
-            </div>
-          </div>
-
-
-          <div class="div mybox2">
-            <div class="form-box ms-5 ms-md-0">
-              <label class="form-label mb-0">Param_3</label>
-              <input type="number" class="form-control p-0 border border-secondary" name="down_param" id="down_param_id"
-                value=0 min=0 max=1000>
-            </div>
-          </div>
-
-
-          <div class="div mybox2">
-            <div class="form-box ms-5 ms-md-0">
-              <label class="form-label mb-0">Param_4</label>
-              <input type="number" class="form-control p-0 border border-secondary" name="alice_param"
-                id="alice_param_id" value=0 min=0 max=1000>
-            </div>
-          </div>
-
-          <div class="div mybox2">
-            <div class="form-box ms-5 ms-md-0">
-              <label class="form-label mb-0">Force State (0=IDLE, 3=PAUSE, 4=EMG)</label>
-              <input type="number" class="form-control p-0 border border-secondary" name="force_state"
-                id="force_state_id" value="0" min="0" max="10">
-            </div>
-          </div>
-
-          <div class="div mybox7 ps-1 pt-1 text-white ">
-            <h6>Station MAC Addresses</h6>
-          </div>
-
-          <div class="div mybox2">
-            <div class="form-box ms-5 ms-md-0">
-              <label class="form-label mb-0">CABIN_MAC</label>
-              <input type="text" class="form-control p-0 border border-secondary" name="cabin_mac"
-                id="cabin_mac_id" placeholder="F8:B3:B7:4F:18:F4">
-            </div>
-          </div>
-
-          <div class="div mybox2">
-            <div class="form-box ms-5 ms-md-0">
-              <label class="form-label mb-0">VSG_MAC</label>
-              <input type="text" class="form-control p-0 border border-secondary" name="vsg_mac"
-                id="vsg_mac_id" placeholder="EC:E3:34:1A:73:3C">
-            </div>
-          </div>
-
-          <div class="div mybox2">
-            <div class="form-box ms-5 ms-md-0">
-              <label class="form-label mb-0">VTG_MAC</label>
-              <input type="text" class="form-control p-0 border border-secondary" name="vtg_mac"
-                id="vtg_mac_id" placeholder="1C:C3:AB:F9:A4:38">
-            </div>
-          </div>
-
-          <div class="div mybox2">
-            <div class="form-box ms-5 ms-md-0">
-              <label class="form-label mb-0">WiFi Channel (AP)</label>
-              <input type="number" class="form-control p-0 border border-secondary" name="wifi_channel"
-                id="wifi_channel_id" value=6 min=1 max=13>
-            </div>
-          </div>
-
-          <div class="row">
-
-            <!-- <div class="col text-center border border-secondary"> -->
-            <div class="col text-center ">
-              <button type="reset" class="btn btn-primary my-2">Reset</button>
-            </div>
-            <div class="col text-center ">
-              <button type="submit" class="btn btn-primary my-2">Submit</button>
-            </div>
-
-            <div class="col text-center ">
-              <button type="button" class="btn btn-primary my-2" onclick="sendStationMacs()">Update MACs</button>
-            </div>
-
-            <div class="col text-center ">
-              <button type="button" class="btn btn-primary my-2" onclick="sendWifiChannel()">Update WiFi Channel</button>
-            </div>
-
-          </div>
         </div>
-
-      </div>
-
-    </div>
     </form>
   </div>
 
@@ -315,5 +322,7 @@
       ensureStationWs();
       alert("Sending WiFi channel update over websocket...");
     }
+
+
   </script>
 </body>

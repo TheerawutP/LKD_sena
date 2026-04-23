@@ -64,4 +64,19 @@ async function on_Button_EMERGENCY_pressed() {
   }
 }
 
+function reset_mcu() {
+    if (!confirm("ARE YOU SURE YOU WANT TO RESET THE MCU?")) return;
+
+    const data = JSON.stringify({
+        reset_mcu: true
+    });
+
+    if (m_websocket && m_websocket.readyState === WebSocket.OPEN) {
+        m_websocket.send(data);
+        console.log("Sent: " + data);
+        alert("Sending reset command...");
+    } else {
+        alert("Error: Cannot connect to lift (WS Disconnected)");
+    }
+}
 
